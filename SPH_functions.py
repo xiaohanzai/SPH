@@ -166,7 +166,7 @@ def EoM_gas(ms, xs, vs, hs, rhos, fs, Ps, alpha, beta, epsilon, gamma = 1.4,
             
             # self-gravity
             if selfgravity:
-                tmp = G*nabla_ij*dphidr(dist, hs, eps)
+                tmp = G*nabla_ij*dphidr(dist, hs[i], eps) # there are problems with dphidr
                 dvdts[i] += -ms[j]*tmp
                 dvdts[j] += ms[i]*tmp
             
