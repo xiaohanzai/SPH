@@ -159,51 +159,53 @@ def EoM_gas(ms, xs, vs, hs, rhos, fs, Ps, alpha, beta, epsilon, gamma = 1.4,
     dvdts = np.zeros_like(xs)
     dAdts = np.zeros_like(ms)
     for i in range(N):
-        for j in range(i+1,N):
-            dist = np.sum((xs[i] - xs[j])**2)**0.5
-            nabla_ij = (xs[i] - xs[j])/max(dist,1e-4)
-            dwdr_hi = calcW(dist,hs[i],D)[1]
-            dwdr_hj = calcW(dist,hs[j],D)[1]
-            
-            # self-gravity
-            if selfgravity:
-                tmp = G*nabla_ij*dphidr(dist, hs[i], eps) # there are problems with dphidr
-                dvdts[i] += -ms[j]*tmp
-                dvdts[j] += ms[i]*tmp
-            
-            # inviscid: calculate dv/dt
-            if dist < 2*hs[i]:
-                dvdts[i] += ms[j]*tmps[i]*nabla_ij*dwdr_hi
-                dvdts[j] -= ms[i]*tmps[i]*nabla_ij*dwdr_hi
-            if dist < 2*hs[j]:
-                dvdts[i] += ms[j]*tmps[j]*nabla_ij*dwdr_hj
-                dvdts[j] -= ms[i]*tmps[j]*nabla_ij*dwdr_hj
+        dist_ij = np.sum((xs[i] - xs[i+1:])**2, axis=1)**0.5
+        dist_ij[dist_ij < 1e-4] = 1e-4
+        nabla_ij = (xs[i] - xs[i+1:]) / dist_ij.reshape(-1,1)
+        dwdr_hi = calcW(dist_ij,hs[i]*np.ones(N-1-i),D)[1]
+        dwdr_hj = calcW(dist_ij,hs[i+1:],D)[1]
 
-            # artificial viscosity
-            if abs(alpha*beta) < 1e-6:
-                continue
+        # self-gravity
+        if selfgravity:
+            tmp = G*nabla_ij*dphidr(dist_ij, eps).reshape(-1,1)
+            dvdts[i] += -np.sum(ms[i+1:].reshape(-1,1)*tmp, axis=0)
+            dvdts[i+1:] += ms[i]*tmp
 
-            # calculate the viscosity factor
-            vij = vs[i] - vs[j]
-            tmp = np.sum(vij*(xs[i] - xs[j]))
-            if tmp >= 0.:
-                continue
-            h_ij = (hs[i] + hs[j])/2.
-            rho_ij = (rhos[i] + rhos[j])/2.
-            c_ij = ((Ps[i]/rhos[i])**0.5 + (Ps[j]/rhos[j])**0.5)/2.
+        # inviscid: calculate dv/dt
+        ind = np.where(dist_ij < 2*hs[i])[0]
+        dvdts[i] += np.sum(((ms[i+1:][ind]*dwdr_hi[ind]).reshape(-1,1)*nabla_ij[ind]), axis=0)*tmps[i]
+        dvdts[i+1:][ind] -= ms[i]*tmps[i]*nabla_ij[ind]*dwdr_hi[ind].reshape(-1,1)
 
-            mu_ij = h_ij*tmp/(dist**2 + epsilon*h_ij**2)
-            Pi_ij = (-alpha*c_ij*mu_ij + beta*mu_ij**2)/rho_ij
+        ind = np.where(dist_ij < 2*hs[i+1:])[0]
+        dvdts[i] += np.sum((ms[i+1:][ind]*tmps[i+1:][ind]*dwdr_hj[ind]).reshape(-1,1)*nabla_ij[ind], axis=0)
+        dvdts[i+1:][ind] -= (ms[i+1:][ind]*tmps[i+1:][ind]*dwdr_hj[ind]).reshape(-1,1)*nabla_ij[ind]
 
-            # calculate dv/dt and dA/dt
-            dwdr_av = 0.5*(dwdr_hi + dwdr_hj)
-            tmp1 =  Pi_ij * dwdr_av * nabla_ij
-            dvdts[i] -= ms[j]*tmp1
-            dvdts[j] += ms[i]*tmp1
+        # artificial viscosity
+        if abs(alpha*beta) < 1e-6:
+            continue
 
-            tmp2 = 0.5*(gamma - 1)*np.sum(vij*tmp1)
-            dAdts[i] += ms[j]*tmp2/rhos[i]**(gamma - 1)
-            dAdts[j] += ms[i]*tmp2/rhos[j]**(gamma - 1)
+        # calculate the viscosity factor
+        vij = vs[i] - vs[i+1:]
+        tmp = np.sum(vij*(xs[i] - xs[i+1:]), axis=1)
+        ii = tmp >= 0.
+
+        h_ij = (hs[i] + hs[i+1:])/2.
+        rho_ij = (rhos[i] + rhos[i+1:])/2.
+        c_ij = ((Ps[i]/rhos[i])**0.5 + (Ps[i+1:]/rhos[i+1:])**0.5)/2.
+
+        mu_ij = h_ij*tmp/(dist_ij**2 + epsilon*h_ij**2)
+        Pi_ij = (-alpha*c_ij*mu_ij + beta*mu_ij**2)/rho_ij
+        Pi_ij[ii] = 0.
+
+        # calculate dv/dt and dA/dt
+        dwdr_av = 0.5*(dwdr_hi + dwdr_hj)
+        tmp1 =  (Pi_ij*dwdr_av).reshape(-1,1) * nabla_ij
+        dvdts[i] -= np.sum(ms[i+1:].reshape(-1,1)*tmp1, axis=0)
+        dvdts[i+1:] += ms[i]*tmp1
+
+        tmp2 = 0.5*(gamma - 1)*np.sum(vij*tmp1, axis=1)
+        dAdts[i] += np.sum(ms[i+1:]*tmp2)/rhos[i]**(gamma - 1)
+        dAdts[i+1:] += ms[i]*tmp2/rhos[i+1:]**(gamma - 1)
         
     return dvdts, dAdts
 
@@ -230,7 +232,7 @@ def dvdt_g(ms, xs, h, eps, dphidr, G):
             dist = np.sum((xs[i] - xs[j])**2)**0.5
             nabla_ij = (xs[i] - xs[j])/max(dist,1e-4)
             
-            tmp = G*nabla_ij*dphidr(dist, h, eps)
+            tmp = G*nabla_ij*dphidr(dist, eps)
             
             dvdts[i] += -ms[j]*tmp
             dvdts[j] += ms[i]*tmp
