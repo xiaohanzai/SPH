@@ -33,8 +33,10 @@ def Euler_gas(ts, dt, BC,
     ts = ts[1:] - ts[0:-1]
     index = np.linspace(0,len(ms)-1,len(ms), dtype=int)
     rst_all = []
+    dt0 = dt
     for t in ts:
         t_remain = t
+        dt = dt0
         if t_remain < dt:
             dt = t_remain
         while t_remain > 1e-6:
@@ -42,6 +44,7 @@ def Euler_gas(ts, dt, BC,
                                      alpha, beta, epsilon, gamma = gamma, 
                                      selfgravity = selfgravity, eps = eps, 
                                      dphidr = dphidr, G = G)
+
             # simple Forward Euler's method
             vs_new = vs0 + dvdts0*dt
             xs_new = xs0 + vs0*dt

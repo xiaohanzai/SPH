@@ -10,6 +10,7 @@ import scipy.integrate
 from math import *
 import matplotlib.pyplot as plt
 import pickle
+import time
 
 def calcW(rs, hs, dimension):
     '''
@@ -17,8 +18,8 @@ def calcW(rs, hs, dimension):
     rs and hs should both be vectors.
     Returns W, \partial W / \partial r, \partial W / \partial h.
     '''
-    # rs = np.asarray(rs, dtype=float)
-    # hs = np.asarray(hs, dtype=float)
+    rs = np.asarray(rs, dtype=float)
+    hs = np.asarray(hs, dtype=float)
     
     if dimension == 1:
         alphas = 1/hs
@@ -32,21 +33,21 @@ def calcW(rs, hs, dimension):
     
     Rs = rs/hs
 
-    # if Rs.size == 1:
-    #     if Rs < 1:
-    #         tmp = 2./3 - Rs**2 + 0.5*Rs**3
-    #         dtdRs = -2*Rs + 1.5*Rs**2
-    #         return alphas*tmp, \
-    #                alphas*dtdRs/hs, \
-    #                -rs/hs**2*alphas*dtdRs + dadhs*tmp
-    #     elif Rs < 2:
-    #         tmp = 1./6*(2 - Rs)**3
-    #         dtdRs = -1./2*(2 - Rs)**2
-    #         return alphas*tmp, \
-    #                alphas*dtdRs/hs, \
-    #                -rs/hs**2*alphas*dtdRs + dadhs*tmp
-    #     else:
-    #         return 0., 0., 0.
+    if Rs.size == 1:
+        if Rs < 1:
+            tmp = 2./3 - Rs**2 + 0.5*Rs**3
+            dtdRs = -2*Rs + 1.5*Rs**2
+            return alphas*tmp, \
+                   alphas*dtdRs/hs, \
+                   -rs/hs**2*alphas*dtdRs + dadhs*tmp
+        elif Rs < 2:
+            tmp = 1./6*(2 - Rs)**3
+            dtdRs = -1./2*(2 - Rs)**2
+            return alphas*tmp, \
+                   alphas*dtdRs/hs, \
+                   -rs/hs**2*alphas*dtdRs + dadhs*tmp
+        else:
+            return 0., 0., 0.
 
     ii01 = Rs < 1.
     ii12 = (Rs >= 1.) & (Rs < 2.)
