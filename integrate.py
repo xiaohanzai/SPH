@@ -17,14 +17,14 @@ def Euler_gas(ts, dt, BC,
       like xs_new, vs_new = BC(xs0, vs0, xs_new, vs_new).
     If adjustSmoothLen, then use variable smoothing lengths. Otherwise fix them.
     '''
-    # ms = np.asarray(ms, dtype=float)
-    # N = ms.size
-    # xs0 = np.asarray(xs0, dtype=float).reshape(N,-1)
-    # vs0 = np.asarray(vs0, dtype=float).reshape(N,-1)
-    # hs0 = np.asarray(hs0, dtype=float)
-    # rhos0 = np.asarray(rhos0, dtype=float)
-    # fs0 = np.asarray(fs0, dtype=float)
-    # Ps0 = np.asarray(Ps0, dtype=float)
+    ms = np.asarray(ms, dtype=float)
+    N = ms.size
+    xs0 = np.asarray(xs0, dtype=float).reshape(N,-1)
+    vs0 = np.asarray(vs0, dtype=float).reshape(N,-1)
+    hs0 = np.asarray(hs0, dtype=float)
+    rhos0 = np.asarray(rhos0, dtype=float)
+    fs0 = np.asarray(fs0, dtype=float)
+    Ps0 = np.asarray(Ps0, dtype=float)
     As0 = Ps0/rhos0**gamma
     D = xs0.shape[1]
     Cs = rhos0*hs0**D
@@ -40,10 +40,10 @@ def Euler_gas(ts, dt, BC,
         if t_remain < dt:
             dt = t_remain
         while t_remain > 1e-6:
-            dvdts0, dAdts0 = EoM_gas(ms, xs0, vs0, hs0, rhos0, fs0, Ps0, 
-                                     alpha, beta, epsilon, gamma = gamma, 
-                                     selfgravity = selfgravity, eps = eps, 
-                                     dphidr = dphidr, G = G)
+            dvdts0, dAdts0, drhodts0 = EoM_gas(ms, xs0, vs0, hs0, rhos0, fs0, Ps0, 
+                                               alpha, beta, epsilon, gamma = gamma, 
+                                               selfgravity = selfgravity, eps = eps, 
+                                               dphidr = dphidr, G = G)
 
             # simple Forward Euler's method
             vs_new = vs0 + dvdts0*dt
@@ -55,15 +55,23 @@ def Euler_gas(ts, dt, BC,
 
             # change smoothing lengths?
             if adjustSmoothLen:
-                hs_new = adjustSmLen(ms, xs_new, rhos0, hs0, Cs)[1]
-                ### there could still be problems with the adjustSmLen fucntion ###
-                # ii = np.isinf(hs_new)
-                # hs_new[ii] = np.mean(hs_new[~ii])
+                dhdts0 = -hs0/rhos0/D*drhodts0
+                hs_tmp = hs0 + drhodts0*dt
+                hs_new = adjustSmLen(ms, xs_new, rhos0, hs_tmp, Cs)[1]
             else:
                 hs_new = hs0
     
             rhos_new, tmp, fs_new = calcRho(ms, xs_new, hs_new, index, 
                                             adjustSmoothLen = adjustSmoothLen)
+
+            ##################################################################
+            ## there could still be problems with the adjustSmLen fucntion ###
+            ii = (np.isinf(hs_new)) | (np.isnan(hs_new)) | (np.isinf(rhos_new)) | (np.isnan(rhos_new))
+            hs_new[ii] = hs0[ii]
+            rhos_new, tmp, fs_new = calcRho(ms, xs_new, hs_new, index, 
+                                            adjustSmoothLen = adjustSmoothLen)
+            ##################################################################
+
             Ps_new = As_new*rhos_new**gamma
 
             xs0 = xs_new+0.

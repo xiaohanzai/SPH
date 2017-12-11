@@ -31,7 +31,7 @@ def calcW(rs, hs, dimension):
         alphas = 3/(2*pi*hs**3)
         dadhs = -9/(2*pi*hs**4)
     
-    Rs = rs/hs
+    Rs = (rs/hs).reshape(-1)
 
     if Rs.size == 1:
         if Rs < 1:
@@ -47,7 +47,7 @@ def calcW(rs, hs, dimension):
                    alphas*dtdRs/hs, \
                    -rs/hs**2*alphas*dtdRs + dadhs*tmp
         else:
-            return 0., 0., 0.
+            return np.array([0.]), np.array([0.]), np.array([0.])
 
     ii01 = Rs < 1.
     ii12 = (Rs >= 1.) & (Rs < 2.)
@@ -94,7 +94,7 @@ def calcRho(ms, xs, hs, index, adjustSmoothLen = False):
 
 ###########################################################
 ##### there may still be problems with this function! #####
-def adjustSmLen(ms, xs, rhos0, hs0, Cs0, tol = 1e-2, fixRho = False):
+def adjustSmLen(ms, xs, rhos, hs, Cs, tol = 1e-2, fixRho = False):
     '''
     If fixRho, then we find the proper smoothing lengths and C such that rho*h^D = C,
       and the density computed by calcRho for every particle is rho.
@@ -103,15 +103,21 @@ def adjustSmLen(ms, xs, rhos0, hs0, Cs0, tol = 1e-2, fixRho = False):
     '''
     # ms = np.asarray(ms, dtype=float)
     # xs = np.asarray(xs, dtype=float).reshape(len(ms),-1)
-    # rhos0 = np.asarray(rhos0, dtype=float)
-    # hs0 = np.asarray(hs0, dtype=float)
-    # Cs0 = np.asarray(Cs0, dtype=float)
+    # rhos0 = np.asarray(rhos, dtype=float)
+    # hs0 = np.asarray(hs, dtype=float)
+    # Cs0 = np.asarray(Cs, dtype=float)
+    rhos0 = rhos.copy()
+    hs0 = hs.copy()
+    Cs0 = Cs.copy()
     
     rhos_new = rhos0.copy()
     hs_new = hs0.copy()
     Cs_new = Cs0.copy()
     index = np.linspace(0,len(rhos0)-1,len(rhos0), dtype=int)
     D = xs.shape[1]
+
+    max_iter = 800
+    k = 0
     
     if fixRho:
         while True:
@@ -121,6 +127,11 @@ def adjustSmLen(ms, xs, rhos0, hs0, Cs0, tol = 1e-2, fixRho = False):
             if len(index) == 0:
                 break
             hs0[index] = hs_new[index]+0.
+
+            k += 1
+            if k > max_iter:
+                break
+
         Cs_new = rhos0*hs_new**D
             
     else:
@@ -132,6 +143,11 @@ def adjustSmLen(ms, xs, rhos0, hs0, Cs0, tol = 1e-2, fixRho = False):
             rhos0[index] = rhos_new[index]+0.
             hs0[index] = hs_new[index]+0.
             rhos_new[index] = calcRho(ms, xs, hs_new, index, adjustSmoothLen = True)[0]
+
+            k += 1
+            if k > max_iter:
+                hs_new[index] = hs[index]
+                break
 
     return rhos_new, hs_new, Cs_new
 ###########################################################
@@ -158,7 +174,8 @@ def EoM_gas(ms, xs, vs, hs, rhos, fs, Ps, alpha, beta, epsilon, gamma = 1.4,
     
     dvdts = np.zeros_like(xs)
     dAdts = np.zeros_like(ms)
-    for i in range(N):
+    drhodts = np.zeros_like(ms)
+    for i in range(N-1):
         dist_ij = np.sum((xs[i] - xs[i+1:])**2, axis=1)**0.5
         dist_ij[dist_ij < 1e-4] = 1e-4
         nabla_ij = (xs[i] - xs[i+1:]) / dist_ij.reshape(-1,1)
@@ -206,38 +223,42 @@ def EoM_gas(ms, xs, vs, hs, rhos, fs, Ps, alpha, beta, epsilon, gamma = 1.4,
         tmp2 = 0.5*(gamma - 1)*np.sum(vij*tmp1, axis=1)
         dAdts[i] += np.sum(ms[i+1:]*tmp2)/rhos[i]**(gamma - 1)
         dAdts[i+1:] += ms[i]*tmp2/rhos[i+1:]**(gamma - 1)
-        
-    return dvdts, dAdts
 
-def dvdt_g(ms, xs, h, eps, dphidr, G):
-    '''
-    Calculate dv/dt caused by self gravity.
-    We assume a universal softening length eps.
-    dphidr specifies the gradient of the gravitational potential with respct to r.
-    The gravitational constant G depends on what units you use.
-    '''
-    # ms = np.asarray(ms, dtype=float)
-    # xs = np.asarray(xs, dtype=float).reshape(len(ms),-1)
-    
-    N = ms.size # number of particles
-    # if N == 1:
-    #     return 0., 0.
-    
-    # xs = xs.reshape(N,-1)
-    D = xs.shape[1] # dimension of the problem
-    
-    dvdts = np.zeros_like(xs)
-    for i in range(N):
-        for j in range(i+1,N):
-            dist = np.sum((xs[i] - xs[j])**2)**0.5
-            nabla_ij = (xs[i] - xs[j])/max(dist,1e-4)
-            
-            tmp = G*nabla_ij*dphidr(dist, eps)
-            
-            dvdts[i] += -ms[j]*tmp
-            dvdts[j] += ms[i]*tmp
+        # drho/dt
+        drhodts[i] += 1./fs[i]*np.sum((ms[i+1:]*dwdr_hi).reshape(-1,1)*vij*nabla_ij)
+        drhodts[i+1:] += -1./fs[i+1:]*ms[i]*dwdr_hj*np.sum(vij*nabla_ij, axis=1)
         
-    return dvdts
+    return dvdts, dAdts, drhodts
+
+# def dvdt_g(ms, xs, h, eps, dphidr, G):
+#     '''
+#     Calculate dv/dt caused by self gravity.
+#     We assume a universal softening length eps.
+#     dphidr specifies the gradient of the gravitational potential with respct to r.
+#     The gravitational constant G depends on what units you use.
+#     '''
+#     # ms = np.asarray(ms, dtype=float)
+#     # xs = np.asarray(xs, dtype=float).reshape(len(ms),-1)
+    
+#     N = ms.size # number of particles
+#     # if N == 1:
+#     #     return 0., 0.
+    
+#     # xs = xs.reshape(N,-1)
+#     D = xs.shape[1] # dimension of the problem
+    
+#     dvdts = np.zeros_like(xs)
+#     for i in range(N-1):
+#         for j in range(i+1,N):
+#             dist = np.sum((xs[i] - xs[j])**2)**0.5
+#             nabla_ij = (xs[i] - xs[j])/max(dist,1e-4)
+            
+#             tmp = G*nabla_ij*dphidr(dist, eps)
+            
+#             dvdts[i] += -ms[j]*tmp
+#             dvdts[j] += ms[i]*tmp
+        
+#     return dvdts
 
 
 
