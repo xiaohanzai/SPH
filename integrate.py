@@ -64,13 +64,13 @@ def Euler_gas(ts, dt, BC,
             rhos_new, tmp, fs_new = calcRho(ms, xs_new, hs_new, index, 
                                             adjustSmoothLen = adjustSmoothLen)
 
-            ##################################################################
-            ## there could still be problems with the adjustSmLen fucntion ###
-            ii = (np.isinf(hs_new)) | (np.isnan(hs_new)) | (np.isinf(rhos_new)) | (np.isnan(rhos_new))
-            hs_new[ii] = hs0[ii]
-            rhos_new, tmp, fs_new = calcRho(ms, xs_new, hs_new, index, 
-                                            adjustSmoothLen = adjustSmoothLen)
-            ##################################################################
+            # ##################################################################
+            # ## there could still be problems with the adjustSmLen fucntion ###
+            # ii = (np.isinf(hs_new)) | (np.isnan(hs_new)) | (np.isinf(rhos_new)) | (np.isnan(rhos_new))
+            # hs_new[ii] = hs0[ii]
+            # rhos_new, tmp, fs_new = calcRho(ms, xs_new, hs_new, index, 
+            #                                 adjustSmoothLen = adjustSmoothLen)
+            # ##################################################################
 
             Ps_new = As_new*rhos_new**gamma
 

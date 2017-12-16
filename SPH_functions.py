@@ -136,13 +136,13 @@ def adjustSmLen(ms, xs, rhos, hs, Cs, tol = 1e-2, fixRho = False):
             
     else:
         while True:
+            rhos_new[index] = calcRho(ms, xs, hs_new, index, adjustSmoothLen = True)[0]
             hs_new[index] = (Cs0[index]/rhos_new[index])**(1./D)
             index = np.where(np.abs((hs_new - hs0)/hs0) > tol)[0]
             if len(index) == 0:
                 break
             rhos0[index] = rhos_new[index]+0.
             hs0[index] = hs_new[index]+0.
-            rhos_new[index] = calcRho(ms, xs, hs_new, index, adjustSmoothLen = True)[0]
 
             k += 1
             if k > max_iter:
@@ -249,14 +249,13 @@ def EoM_gas(ms, xs, vs, hs, rhos, fs, Ps, alpha, beta, epsilon, gamma = 1.4,
     
 #     dvdts = np.zeros_like(xs)
 #     for i in range(N-1):
-#         for j in range(i+1,N):
-#             dist = np.sum((xs[i] - xs[j])**2)**0.5
-#             nabla_ij = (xs[i] - xs[j])/max(dist,1e-4)
-            
-#             tmp = G*nabla_ij*dphidr(dist, eps)
-            
-#             dvdts[i] += -ms[j]*tmp
-#             dvdts[j] += ms[i]*tmp
+#         dist_ij = np.sum((xs[i] - xs[i+1:])**2, axis=1)**0.5
+#         dist_ij[dist_ij < 1e-4] = 1e-4
+#         nabla_ij = (xs[i] - xs[i+1:]) / dist_ij.reshape(-1,1)
+
+#         tmp = G*nabla_ij*dphidr(dist_ij, eps).reshape(-1,1)
+#         dvdts[i] += -np.sum(ms[i+1:].reshape(-1,1)*tmp, axis=0)
+#         dvdts[i+1:] += ms[i]*tmp
         
 #     return dvdts
 
