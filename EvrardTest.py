@@ -1,11 +1,12 @@
 '''
 Evrard test: adiabatic collapse of a gas sphere.
 '''
-import sys
-sys.path.append('/n/home10/xiaohanwu/SPH/')
+# import sys
+# sys.path.append('/n/home10/xiaohanwu/SPH/')
 from SPH_functions import *
 from integrate import Euler_gas
 import h5py
+from mpl_toolkits.mplot3d import Axes3D
 
 class EvrardTest(object):
     '''
@@ -13,10 +14,10 @@ class EvrardTest(object):
     '''
     def __init__(self, adjustSmoothLen = False, h = 0.12):
         '''
-        The initial conditions are taken from the gadget input file.
+        The initial conditions are taken from the gadget input file. h is the smoothing length, 
+          if you want to fix it constant.
         '''
         data = h5py.File('EvrardInput.hdf5')
-        # data = h5py.File('test3.hdf5')
         # data = h5py.File('/n/hernquistfs2/xiaohanwu/project1/work/gadget_tests/test2/output_hdf5/snapshot_000.hdf5')
         gas = data['PartType0']
         
@@ -79,12 +80,6 @@ def main():
 
     with open(outpath+'EvrardTest.dat','wb') as f:
         pickle.dump(rst,f)
-
-    # data = EvrardTest(h = 1e7)
-    # rst = data.run(np.arange(10,8000,50), dt=5, alpha = 1, beta = 2, eps = 5e6, G = 6.67e-11)
-
-    # with open(outpath+'test3.dat','wb') as f:
-    #     pickle.dump(rst,f)
 
 if __name__ == '__main__':
     main()

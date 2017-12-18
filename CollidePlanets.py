@@ -1,8 +1,8 @@
 '''
 A stupid planet collision simulation. Totally wrong...
 '''
-import sys
-sys.path.append('/n/home10/xiaohanwu/SPH/')
+# import sys
+# sys.path.append('/n/home10/xiaohanwu/SPH/')
 from SPH_functions import *
 from integrate import *
 
@@ -11,8 +11,9 @@ class CollidePlanets(object):
                  planet1file = 'Planet300.dat', planet2file = 'Planet300.dat', 
                  gamma = 1.4, adjustSmoothLen = False):
         '''
-        Read single planet data from file. Assign each planet with a center position and a 
-          velocity. Also assign them with initial smoothing lengths.
+        Read single planet data from file. Assign each planet with a center position
+          xc1, xc2, and a velocity vc1, vc2. Also assign them with initial smoothing 
+          lengths h1 and h2.
         '''
         # path = '/n/home10/xiaohanwu/SPH/'
         path = './'
@@ -56,7 +57,7 @@ class CollidePlanets(object):
 
 def main():
     data = CollidePlanets([-1e8,0,0], [25e3,0,0], 1e7, [1e8,0,0], [-25e3,0,0], 1e7)
-    rst = data.run(np.arange(10,2000,50), 5e6, dt=5.)
+    rst = data.run(np.arange(10,8000,50), 1e6, dt=5.)
 
     # outpath = '/n/home10/xiaohanwu/SPH/'
     outpath = './'

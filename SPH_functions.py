@@ -67,7 +67,7 @@ def calcRho(ms, xs, hs, index, adjustSmoothLen = False):
       calculate the densities.
     ms, xs, hs are the mass, position, and smoothing length vectors.
     xs.shape[1] indicates the dimension of the problem.
-    Returns rho and f = 1./(1 + hs/3./rhos* \partial rho / \partial h).
+    Returns rho and f = 1./(1 + hs/D/rhos* \partial rho / \partial h).
     '''
     # ms = np.asarray(ms, dtype=float)
     # xs = np.asarray(xs, dtype=float).reshape(len(ms),-1)
@@ -88,7 +88,7 @@ def calcRho(ms, xs, hs, index, adjustSmoothLen = False):
         if not adjustSmoothLen:
             continue
         drhodhs[count] = np.sum(ms[ind]*dwdhs)
-        fs[count] = 1./(1 + hs[i]/3./rhos[count]*drhodhs[count])
+        fs[count] = 1./(1 + hs[i]/D/rhos[count]*drhodhs[count])
         
     return rhos, drhodhs, fs
 
@@ -156,6 +156,7 @@ def EoM_gas(ms, xs, vs, hs, rhos, fs, Ps, alpha, beta, epsilon, gamma = 1.4,
             selfgravity = False, eps = 1., dphidr = None, G = 6.67e-11):
     '''
     Calculate dv/dt and dA/dt for gas. A is entropy.
+    eps is the softening length, if you need self-gravity.
     '''
     # ms = np.asarray(ms, dtype=float)
     # xs = np.asarray(xs, dtype=float).reshape(len(ms),-1)
@@ -230,7 +231,7 @@ def EoM_gas(ms, xs, vs, hs, rhos, fs, Ps, alpha, beta, epsilon, gamma = 1.4,
         
     return dvdts, dAdts, drhodts
 
-# def dvdt_g(ms, xs, h, eps, dphidr, G):
+# def dvdt_g(ms, xs, eps, dphidr, G):
 #     '''
 #     Calculate dv/dt caused by self gravity.
 #     We assume a universal softening length eps.

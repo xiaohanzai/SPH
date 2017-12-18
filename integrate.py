@@ -57,6 +57,7 @@ def Euler_gas(ts, dt, BC,
             if adjustSmoothLen:
                 dhdts0 = -hs0/rhos0/D*drhodts0
                 hs_tmp = hs0 + drhodts0*dt
+                # hs_tmp = hs0.copy() # if the above two lines yield warnings, use this line instead
                 hs_new = adjustSmLen(ms, xs_new, rhos0, hs_tmp, Cs)[1]
             else:
                 hs_new = hs0
@@ -90,40 +91,40 @@ def Euler_gas(ts, dt, BC,
     
     return rst_all
 
-def Euler_g(ts, dt, BC, 
-            ms, xs0, vs0, h, eps, dphidr, G):
-    '''
-    Only involve self-gravity here. eps is the softening length.
-    The format of dphidr should be g = m * dphidr(r, h, eps).
-    We do not adjust smoothing lengths in this case, just to make things easier.
-    '''
-    ts = np.append(0,np.asarray(ts))
-    ts = ts[1:] - ts[0:-1]
+# def Euler_g(ts, dt, BC, 
+#             ms, xs0, vs0, eps, dphidr, G):
+#     '''
+#     Only involve self-gravity here. eps is the softening length.
+#     The format of dphidr should be g = m * dphidr(r, eps).
+#     We do not adjust smoothing lengths in this case, just to make things easier.
+#     '''
+#     ts = np.append(0,np.asarray(ts))
+#     ts = ts[1:] - ts[0:-1]
 
-    rst_all = []
-    for t in ts:
-        t_remain = t
-        if t_remain < dt:
-            dt = t_remain
-        while t_remain > 1e-6:
-            dvdts0 = dvdt_g(ms, xs0, h, eps, dphidr, G)
-            # simple Forward Euler's method
-            vs_new = vs0 + dvdts0*dt
-            xs_new = xs0 + vs0*dt
+#     rst_all = []
+#     for t in ts:
+#         t_remain = t
+#         if t_remain < dt:
+#             dt = t_remain
+#         while t_remain > 1e-6:
+#             dvdts0 = dvdt_g(ms, xs0, eps, dphidr, G)
+#             # simple Forward Euler's method
+#             vs_new = vs0 + dvdts0*dt
+#             xs_new = xs0 + vs0*dt
             
-            # implement boundary condition
-            xs_new, vs_new = BC(xs0, vs0, xs_new, vs_new)
+#             # implement boundary condition
+#             xs_new, vs_new = BC(xs0, vs0, xs_new, vs_new)
 
-            xs0 = xs_new+0.
-            vs0 = vs_new+0.
+#             xs0 = xs_new+0.
+#             vs0 = vs_new+0.
 
-            t_remain -= dt
-            if (t_remain > 1e-6) & (t_remain < dt):
-                dt = t_remain
+#             t_remain -= dt
+#             if (t_remain > 1e-6) & (t_remain < dt):
+#                 dt = t_remain
     
-        rst_all.append([xs0, vs0])
+#         rst_all.append([xs0, vs0])
     
-    return rst_all
+#     return rst_all
 
 
 

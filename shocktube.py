@@ -1,8 +1,8 @@
 '''
 Test the standard shocktube problem.
 '''
-import sys
-sys.path.append('/n/home10/xiaohanwu/SPH/')
+# import sys
+# sys.path.append('/n/home10/xiaohanwu/SPH/')
 from SPH_functions import *
 from integrate import Euler_gas
 
@@ -81,14 +81,23 @@ def main():
 
     rst = data.run([0.05,0.10,0.15,0.2], 0, 0)
     xs, vs, As, hs, rhos, fs, Ps = rst[-1]
+    
     with open(outpath+'shocktube.dat','wb') as f:
         pickle.dump(rst,f)
 
     fig, axes = plt.subplots(figsize=(10,10),nrows=2,ncols=2)
-    axes[0][0].plot(xs,Ps,'k.')
-    axes[0][1].plot(xs,rhos,'k.')
+    axes[0][0].plot(xs,rhos,'k.')
+    axes[0][0].set_xlabel(r'$x$', fontsize=16)
+    axes[0][0].set_ylabel(r'$\rho$',fontsize=16)
+    axes[0][1].plot(xs,Ps,'k.')
+    axes[0][1].set_xlabel(r'$x$', fontsize=16)
+    axes[0][1].set_ylabel(r'$P$',fontsize=16)
     axes[1][0].plot(xs,vs,'k.')
+    axes[1][0].set_xlabel(r'$x$', fontsize=16)
+    axes[1][0].set_ylabel(r'$v$',fontsize=16)
     axes[1][1].plot(xs,Ps/(0.4*rhos),'k.')
+    axes[1][1].set_xlabel(r'$x$', fontsize=16)
+    axes[1][1].set_ylabel(r'$u$',fontsize=16)
     plt.show()
 
     rst = data.run([0.05,0.1,0.15,0.2], 1, 2)
@@ -98,10 +107,18 @@ def main():
         pickle.dump(rst,f)
 
     fig, axes = plt.subplots(figsize=(10,10),nrows=2,ncols=2)
-    axes[0][0].plot(xs,Ps,'k.')
-    axes[0][1].plot(xs,rhos,'k.')
+    axes[0][0].plot(xs,rhos,'k.')
+    axes[0][0].set_xlabel(r'$x$', fontsize=16)
+    axes[0][0].set_ylabel(r'$\rho$',fontsize=16)
+    axes[0][1].plot(xs,Ps,'k.')
+    axes[0][1].set_xlabel(r'$x$', fontsize=16)
+    axes[0][1].set_ylabel(r'$P$',fontsize=16)
     axes[1][0].plot(xs,vs,'k.')
+    axes[1][0].set_xlabel(r'$x$', fontsize=16)
+    axes[1][0].set_ylabel(r'$v$',fontsize=16)
     axes[1][1].plot(xs,Ps/(0.4*rhos),'k.')
+    axes[1][1].set_xlabel(r'$x$', fontsize=16)
+    axes[1][1].set_ylabel(r'$u$',fontsize=16)
     plt.show()
 
     # variable smoothing length
@@ -114,10 +131,18 @@ def main():
         pickle.dump(rst,f)
 
     fig, axes = plt.subplots(figsize=(10,10),nrows=2,ncols=2)
-    axes[0][0].plot(xs,Ps,'k.')
-    axes[0][1].plot(xs,rhos,'k.')
+    axes[0][0].plot(xs,rhos,'k.')
+    axes[0][0].set_xlabel(r'$x$', fontsize=16)
+    axes[0][0].set_ylabel(r'$\rho$',fontsize=16)
+    axes[0][1].plot(xs,Ps,'k.')
+    axes[0][1].set_xlabel(r'$x$', fontsize=16)
+    axes[0][1].set_ylabel(r'$P$',fontsize=16)
     axes[1][0].plot(xs,vs,'k.')
+    axes[1][0].set_xlabel(r'$x$', fontsize=16)
+    axes[1][0].set_ylabel(r'$v$',fontsize=16)
     axes[1][1].plot(xs,Ps/(0.4*rhos),'k.')
+    axes[1][1].set_xlabel(r'$x$', fontsize=16)
+    axes[1][1].set_ylabel(r'$u$',fontsize=16)
     plt.show()
 
 if __name__ == '__main__':

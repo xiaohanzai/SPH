@@ -1,8 +1,8 @@
 '''
 Test the standard shocktube problem.
 '''
-import sys
-sys.path.append('/n/home10/xiaohanwu/SPH/')
+# import sys
+# sys.path.append('/n/home10/xiaohanwu/SPH/')
 from SPH_functions import *
 from integrate import Euler_gas
 
@@ -10,14 +10,14 @@ class Blastwave(object):
     '''
     1D blast wave problem.
     '''
-    def __init__(self, bxl = 0.02, bxr = 0.02, adjustSmoothLen = False):
+    def __init__(self, bxl = 0.04, bxr = 0.04, adjustSmoothLen = False):
         '''
         The setups are all standard. 
         bxl and bxr give the positions of the outermost particles. I use the 
           particles beyond [-0.5,0.5] as "boundary layers".
         '''
-        self.xs0 = np.concatenate((np.arange(-0.5-bxl+0.01/8/2,0,0.01/8), 
-                                   np.arange(0.01/8/2,0.5+bxr,0.01/8)))
+        self.xs0 = np.concatenate((np.arange(-0.5-bxl+0.01/2,0,0.01), 
+                                   np.arange(0.01/2,0.5+bxr,0.01)))
         self.N = len(self.xs0)
         self.xs0 = self.xs0.reshape(self.N,-1)
         self.vs0 = np.zeros_like(self.xs0)
@@ -29,7 +29,7 @@ class Blastwave(object):
 
         self.gamma = 1.4
 
-        self.ms = np.ones(self.N)*1.*0.01/8
+        self.ms = np.ones(self.N)*1.*0.01
         self.hs0 = 0.01*1.2*np.ones_like(self.ms)
         self.adjustSmoothLen = adjustSmoothLen
         self.rhos0, tmp, self.fs0 = calcRho(self.ms,self.xs0,self.hs0,self.index,
@@ -79,26 +79,44 @@ def main():
 
     rst = data.run([0.0025,0.005,0.0075,0.01], 0, 0)
     xs, vs, As, hs, rhos, fs, Ps = rst[-1]
+
     with open(outpath+'blastwave.dat','wb') as f:
         pickle.dump(rst,f)
 
     fig, axes = plt.subplots(figsize=(10,10),nrows=2,ncols=2)
-    axes[0][0].plot(xs,Ps,'k.')
-    axes[0][1].plot(xs,rhos,'k.')
+    axes[0][0].plot(xs,rhos,'k.')
+    axes[0][0].set_xlabel(r'$x$', fontsize=16)
+    axes[0][0].set_ylabel(r'$\rho$',fontsize=16)
+    axes[0][1].plot(xs,Ps,'k.')
+    axes[0][1].set_xlabel(r'$x$', fontsize=16)
+    axes[0][1].set_ylabel(r'$P$',fontsize=16)
     axes[1][0].plot(xs,vs,'k.')
+    axes[1][0].set_xlabel(r'$x$', fontsize=16)
+    axes[1][0].set_ylabel(r'$v$',fontsize=16)
     axes[1][1].plot(xs,Ps/(0.4*rhos),'k.')
+    axes[1][1].set_xlabel(r'$x$', fontsize=16)
+    axes[1][1].set_ylabel(r'$u$',fontsize=16)
     plt.show()
 
     rst = data.run([0.0025,0.005,0.0075,0.01], 1, 2)
     xs, vs, As, hs, rhos, fs, Ps = rst[-1]
+
     with open(outpath+'blastwave_av.dat','wb') as f:
         pickle.dump(rst,f)
 
     fig, axes = plt.subplots(figsize=(10,10),nrows=2,ncols=2)
-    axes[0][0].plot(xs,Ps,'k.')
-    axes[0][1].plot(xs,rhos,'k.')
+    axes[0][0].plot(xs,rhos,'k.')
+    axes[0][0].set_xlabel(r'$x$', fontsize=16)
+    axes[0][0].set_ylabel(r'$\rho$',fontsize=16)
+    axes[0][1].plot(xs,Ps,'k.')
+    axes[0][1].set_xlabel(r'$x$', fontsize=16)
+    axes[0][1].set_ylabel(r'$P$',fontsize=16)
     axes[1][0].plot(xs,vs,'k.')
+    axes[1][0].set_xlabel(r'$x$', fontsize=16)
+    axes[1][0].set_ylabel(r'$v$',fontsize=16)
     axes[1][1].plot(xs,Ps/(0.4*rhos),'k.')
+    axes[1][1].set_xlabel(r'$x$', fontsize=16)
+    axes[1][1].set_ylabel(r'$u$',fontsize=16)
     plt.show()
 
     # variable smoothing length
@@ -106,14 +124,23 @@ def main():
 
     rst = data.run([0.0025,0.005,0.0075,0.01], 1, 2)
     xs, vs, As, hs, rhos, fs, Ps = rst[-1]
+
     with open(outpath+'blastwave_av_vsl.dat','wb') as f:
         pickle.dump(rst,f)
 
     fig, axes = plt.subplots(figsize=(10,10),nrows=2,ncols=2)
-    axes[0][0].plot(xs,Ps,'k.')
-    axes[0][1].plot(xs,rhos,'k.')
+    axes[0][0].plot(xs,rhos,'k.')
+    axes[0][0].set_xlabel(r'$x$', fontsize=16)
+    axes[0][0].set_ylabel(r'$\rho$',fontsize=16)
+    axes[0][1].plot(xs,Ps,'k.')
+    axes[0][1].set_xlabel(r'$x$', fontsize=16)
+    axes[0][1].set_ylabel(r'$P$',fontsize=16)
     axes[1][0].plot(xs,vs,'k.')
+    axes[1][0].set_xlabel(r'$x$', fontsize=16)
+    axes[1][0].set_ylabel(r'$v$',fontsize=16)
     axes[1][1].plot(xs,Ps/(0.4*rhos),'k.')
+    axes[1][1].set_xlabel(r'$x$', fontsize=16)
+    axes[1][1].set_ylabel(r'$u$',fontsize=16)
     plt.show()
 
 if __name__ == '__main__':
